@@ -8,36 +8,43 @@
 # LIBRARIES ----
 
 library(tidymodels)
-library(tidyclust)
+library(tidyclust) # For clustering
 library(tidyverse) # May need to import library(lubridate)
 library(tidyquant)
 library(plotly)
-
+library(janitor)
 # DATA ----
 
-marketing_campaign_tbl <- read_csv("./")
+marketing_campaign_tbl <- read_csv("./data/marketing_campaign.csv")
 
-marketing_campaign_tbl %>% glimpse()
+marketing_campaign_tbl <- marketing_campaign_tbl %>%
+    clean_names() %>% 
+    glimpse()
+
+# Checking missing values
+
+skimr::skim_without_charts(marketing_campaign_tbl)
 
 # 1.0 DATA PREPARATION ----
 
 data_prep_tbl <- marketing_campaign_tbl %>%
-    
+
+   
     # Remove NA values
     drop_na() %>%
     
     # Convert Dt_Customer datatype to Date
-    mutate(Dt_Customer = dmy(Dt_Customer)) %>% 
+    mutate(dt_customer = dmy(dt_customer)) %>%
     
     # Feature: Customer Age - max customer date
-    mutate(Dt_Customer_Age = -1*(Dt_Customer - min(Dt_Customer) ) / ddays(1) ) %>%
-    select(-Dt_Customer) %>%
+    mutate(dt_customer_age = -1*(dt_customer - min(dt_customer)) / ddays(1)) %>%
+    select(-dt_customer) %>%
     
-    # Spent = Sum(Mnt...)
-    mutate(Spent = rowSums(across(starts_with("Mnt")))) %>%
+    # Spent = Sum(mnt...)
+    mutate(Spent = rowSums(across(starts_with("mnt")))) %>%
     
     # Remove unnecessary features
-    select(-Z_CostContact, -Z_Revenue, -Response)
+    select(-c(z_cost_contact, z_revenue, response))
 
 data_prep_tbl %>% glimpse()
 
@@ -50,19 +57,20 @@ recipe_kmeans <- recipe(~ ., data = data_prep_tbl) %>%
     
     # normalize all features
     step_normalize(all_numeric_predictors()) %>%
-    step_rm("ID")
+    step_rm("id")
 
 recipe_kmeans %>% prep() %>% juice() %>% glimpse()
 
 # 3.0 K-MEANS MODEL ----
 
-model_kmeans <- k_means(num_clusters = 4) %>%
+model_kmeans <- k_means(num_clusters = 3) %>%
     set_engine("stats")
 
 set.seed(123)
 wflw_fit_kmeans <- workflow() %>%
-    add_model(model_kmeans) %>%
+
     add_recipe(recipe_kmeans) %>%
+    add_model(model_kmeans) %>%
     fit(data_prep_tbl)
 
 # 4.0 PREDICT NEW DATA ----
@@ -77,7 +85,7 @@ extract_centroids(wflw_fit_kmeans)
 
 g <- data_prep_tbl %>%
     bind_cols(extract_cluster_assignment(wflw_fit_kmeans), .) %>%
-    ggplot(aes(Spent, Income)) +
+    ggplot(aes(Spent, income)) +
     geom_point(
         aes(fill = .cluster),
         shape = 21,
