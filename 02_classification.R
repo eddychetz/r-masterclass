@@ -1,13 +1,12 @@
 # CLASSIFICATION ----
 
-
-# Libraries ----
+# * Libraries ----
 
 library(tidyverse)
 library(tidymodels)
 library(janitor)
 
-# Read data ----
+# * Read data ----
 
 credit_tbl <- read_csv("./data/credit_loans.csv")
 
@@ -17,7 +16,7 @@ credit_tbl <- credit_tbl %>%
     
     glimpse()
 
-# Data Preparation ----
+# * Data Preparation ----
 
 credit_prep_tbl <- credit_tbl %>% 
     mutate_if(is.character, as_factor) %>%
@@ -29,7 +28,7 @@ credit_prep_tbl <- credit_tbl %>%
 
 skimr::skim_without_charts(credit_prep_tbl)
 
-# Split ----
+# * Split ----
 
 set.seed(123)
 split <- credit_prep_tbl %>% initial_split(prop = 0.8)
@@ -78,11 +77,11 @@ loan_credit_wf <- workflow() %>%
     # Add model spec
     add_model(model_spec) 
 
-# Fit the model
+# Fit the model ----
 
 credit_fit <- fit(loan_credit_wf, data = train_tbl)
 
-# * Make predictions
+# * Make predictions ----
 
 predictions <- credit_fit %>%
     predict(test_tbl) %>%
