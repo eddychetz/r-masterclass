@@ -29,11 +29,13 @@ saveRDS(data_tbl, "./day_01/table.rds")
 
 write.csv(data_tbl, "./day_01/table.csv")
 
+# write.csv(marketing_campaign, "./data/marketing_campaign.csv")
+
 
 # Read data ----
 library(janitor)
 
-credit_tbl <- read_csv("./credit_loans.csv")
+credit_tbl <- read_csv("./data/credit_loans.csv")
 
 credit_tbl <- credit_tbl %>% 
     
