@@ -4,7 +4,9 @@ library(tidyverse)
 library(janitor)
 library(arules)
 
-transactions_tbl <- read_csv('./data/transactions.csv')
+transactions_tbl <- read_csv('./data/transactions.csv') %>%
+    
+    clean_names()
 
 transactions_tbl %>% glimpse()
 
@@ -13,9 +15,9 @@ transactions_tbl %>% glimpse()
 # and each column represents an item
 
 transactions <- transactions_tbl %>%
-    pivot_longer(-...1, names_to = "item", values_to = "value") %>%
-    filter(!is.na(value)) %>%
-    select(...1, item) %>%
+    pivot_longer(!x1, names_to = "item", values_to = "count") %>%
+    filter(!is.na(count)) %>%
+    select(x1, item) %>%
     unique() %>%
     droplevels()
 
@@ -25,15 +27,17 @@ transactions
 
 transactions <- as(transactions, "transactions")
 
-# Explore the resulting association rules
+# Run the Apriori algorithm
 
 min_support <- 0.01  # Adjust the support threshold as needed
 min_confidence <- 0.3  # Adjust the confidence threshold as needed
 
 rules <- apriori(
     transactions,
-    parameter = list(support = min_support, confidence = min_confidence)
-)
+    parameter = list(
+        support = min_support, 
+        confidence = min_confidence
+        ))
 
 # Explore the resulting association rules
 
