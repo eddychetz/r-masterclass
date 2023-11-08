@@ -21,6 +21,7 @@ data2_tbl %>% glimpse()
 library(fs)
 
 fs::dir_create("./day_01/")
+fs::dir_create("./data/")
 
 # Save data ----
 
