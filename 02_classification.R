@@ -19,9 +19,9 @@ credit_tbl <- credit_tbl %>%
 # * Data Preparation ----
 
 credit_prep_tbl <- credit_tbl %>% 
+    mutate(credit_history = as.character(credit_history)) %>%
     mutate_if(is.character, as_factor) %>%
     select(-loan_id) %>%
-    mutate(credit_history = as_factor(credit_history)) %>%
     glimpse()
 
 # Check missing values ----
@@ -51,7 +51,7 @@ credit_recipe <- recipe(
     
 # Encoding cat features
     step_dummy(
-        all_nominal(), 
+        all_nominal_predictors(), 
         one_hot = TRUE
         ) %>%
     step_normalize(all_predictors())
@@ -63,9 +63,9 @@ credit_recipe %>%
 
 # MODELING ----
 
-model_spec <- rand_forest(trees = 100) %>%
-    set_mode('classification') %>%
-    set_engine('ranger')
+model_spec <- rand_forest() %>%
+    set_mode("classification") %>%
+    set_engine("randomForest")
 
 # * Combine recipe and model in a workflow
 
@@ -78,6 +78,7 @@ loan_credit_wf <- workflow() %>%
     add_model(model_spec) 
 
 # Fit the model ----
+# credit_prep_tbl$loan_status
 
 credit_fit <- fit(loan_credit_wf, data = train_tbl)
 
@@ -91,9 +92,9 @@ predictions <- credit_fit %>%
 
 # * Evaluate the model ----
 
-credit_metrics <- predictions %>%
-    metrics(truth = loan_status, estimate = .pred_class)
+credit_metrics <- confusion_matrix(predictions, truth = test_tbl$loan_status)
 
+# Additional evaluation metrics as needed
 credit_metrics
     
     
